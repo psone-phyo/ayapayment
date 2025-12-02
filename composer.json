@@ -1,0 +1,22 @@
+{
+  "name": "gmbfgp/ayapayment",
+  "description": "AYA Payment Gateway package for Laravel",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "AyaPayment\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "AyaPayment\\AyaPaymentServiceProvider"
+      ]
+    }
+  },
+  "minimum-stability": "stable",
+  "require": {
+    "guzzlehttp/guzzle": "^7.8"
+  }
+}
