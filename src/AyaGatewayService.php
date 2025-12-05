@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client as GuzzleHttpClient;
 
-class AYAPaymentService
+class AyaGatewayService
 {
     // Define the base URL for AYA Payment Gateway
     protected $baseUrl;
@@ -17,7 +17,7 @@ class AYAPaymentService
 
     public function __construct()
     {
-        $this->baseUrl = config('payment.aya_gateway.payment_url');
+        $this->baseUrl = config('ayapayment.gateway.payment_url');
         $this->client = new GuzzleHttpClient([
             'headers' => [
                 'Content-Type' => 'application/json',
@@ -28,21 +28,6 @@ class AYAPaymentService
 
     public function getServiceList()
     {
-
-        // return [
-        //     [
-        //         "name" => "MPU",
-        //         "key" => "mpu",
-        //         "image_url" => "https://aya-paymentgw-s3.s3.ap-southeast-1.amazonaws.com/channels/mpu.png",
-        //         "methods" => ["WEB"]
-        //     ],
-        //     [
-        //         "name" => "AYA Pay",
-        //         "key" => "aya_pay",
-        //         "image_url" => "https://aya-paymentgw-s3.s3.ap-southeast-1.amazonaws.com/channels/aya.png",
-        //         "methods" => ["APP"]
-        //     ]
-        // ];
         if (Cache::has($this->serviceCacheKey)) {
             return Cache::get($this->serviceCacheKey);
         }
@@ -50,11 +35,11 @@ class AYAPaymentService
         try {
             $response = $this->client->post($this->baseUrl . '/v1/payment/services', [
                 'body' => json_encode([
-                    'appKey' => config('payment.aya_gateway.app_key'),
+                    'appKey' => config('ayapayment.gateway.app_key'),
                     'timestamp' => $timestamp,
                     'checkSum' => $this->generateCheckSum([
-                        config('payment.aya_gateway.app_key'),
-                        config('payment.aya_gateway.app_secret'),
+                        config('ayapayment.gateway.app_key'),
+                        config('ayapayment.gateway.app_secret'),
                         $timestamp
                     ])
                 ])
@@ -78,13 +63,13 @@ class AYAPaymentService
         $timestamp = Carbon::now()->timestamp;
         $response = $this->client->post($this->baseUrl . '/v1/payment/enquiry', [
             'body' => json_encode([
-                'appKey' => config('payment.aya_gateway.app_key'),
+                'appKey' => config('ayapayment.gateway.app_key'),
                 'timestamp' => $timestamp,
                 'merchOrderId' => $merchOrderId,
                 'checkSum' => $this->generateCheckSum([
                     $merchOrderId,
                     $timestamp,
-                    config('payment.aya_gateway.app_key')
+                    config('ayapayment.gateway.app_key')
                 ])
             ])
         ]);
@@ -96,9 +81,9 @@ class AYAPaymentService
     {
         $timestamp = Carbon::now()->timestamp;
         $formData = [
-            'merchOrderId' => "JJ-".$merchOrderId,
+            'merchOrderId' => $merchOrderId,
             'amount' => ceil($amount),
-            'appKey' => config('payment.aya_gateway.app_key'),
+            'appKey' => config('ayapayment.gateway.app_key'),
             'timestamp' => $timestamp,
             'userRef1' => $userRef1,
             'userRef2' => $userRef2,
@@ -109,7 +94,7 @@ class AYAPaymentService
             'currencyCode' => 104,
             'channel' => $channel,
             'method' => $method,
-            'overrideFrontendRedirectUrl' => config('payment.aya_gateway.frontend_url'),
+            'overrideFrontendRedirectUrl' => config('ayapayment.gateway.frontend_url'),
         ];
         $formData['checkSum'] = $this->generateCheckSum(array_values($formData));
         return $formData;
@@ -119,7 +104,7 @@ class AYAPaymentService
     public function generateCheckSum($dataArray)
     {
         $hashString = implode(':', $dataArray);
-        $checkSum = hash_hmac('sha256', $hashString, config('payment.aya_gateway.app_secret'));
+        $checkSum = hash_hmac('sha256', $hashString, config('ayapayment.gateway.app_secret'));
         return $checkSum;
     }
 

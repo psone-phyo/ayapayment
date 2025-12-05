@@ -2,6 +2,7 @@
 
 namespace AyaPayment;
 
+use AyaPayment\AyaPaymentService;
 use Illuminate\Support\ServiceProvider;
 
 class AyaPaymentServiceProvider extends ServiceProvider
@@ -15,8 +16,12 @@ class AyaPaymentServiceProvider extends ServiceProvider
         );
 
         // bind service
-        $this->app->singleton('ayapayment', function () {
-            return new AyaPaymentService();
+        $this->app->singleton(AyaGatewayService::class, function () {
+            return new AyaGatewayService();
+        });
+
+        $this->app->singleton(AyaPayService::class, function () {
+            return new AyaPayService();
         });
     }
 
