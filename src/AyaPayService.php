@@ -18,6 +18,8 @@ class AyaPayService
     protected $paymentRequestUrl;
     protected $QRRequestUrl;
     protected $refundPaymentUrl;
+    protected $serviceCode;
+    protected $checkStatusUrl;
 
     public function __constuct()
     {
@@ -27,13 +29,15 @@ class AyaPayService
         $this->merchantPassword = config('ayapayment.pay.merchant_password');
         $this->baseUrl = config('ayapayment.pay.payment_url');
         $this->currency = config('ayapayment.pay.currency');
+        $this->serviceCode = config('ayapayment.pay.service_code');
 
-        $this->urlPrefix = $this->baseUrl . 'merchant/1.0.0/thirdparty/merchant/';
+        $this->urlPrefix = $this->baseUrl . 'om/1.0.0/thirdparty/merchant/';
         $this->merchantTokenUrl = $this->baseUrl . 'token';
         $this->merchantLoginUrl = $this->urlPrefix . 'login';
-        $this->paymentRequestUrl = $this->urlPrefix . 'requestPushayapayment';
-        $this->QRRequestUrl = $this->urlPrefix . 'requestQRPayment';
+        $this->paymentRequestUrl = $this->urlPrefix . 'v2/requestPushPayment';
+        $this->QRRequestUrl = $this->urlPrefix . 'v2/requestQRPayment';
         $this->refundPaymentUrl = $this->urlPrefix . 'refundPayment';
+        $this->checkStatusUrl = $this->urlPrefix . 'checkRequestPayment';
     }
 
     public function accessToken()
@@ -108,13 +112,15 @@ class AyaPayService
             $form['url'] = $this->paymentRequestUrl;
             $form['accessToken'] = $access_token;
             $form['authorizationKey'] = $authorization_key;
-            $form['contentType'] = 'application/json';
+            $form['contentType'] = 'application/x-www-form-urlencoded';
             $form['values'] =
                 "<input type='hidden' id='customerPhone' name='customerPhone' value='" . $customer_phone . "'/>" .
                 "<input type='hidden' id='amount' name='amount' value='" . $amount . "'/>" .
                 "<input type='hidden' id='currency' name='currency' value='" . $currency . "'/>" .
                 "<input type='hidden' id='externalTransactionId' name='externalTransactionId' value='" . $externalTransactionId . "'/>" .
-                "<input type='hidden' id='externalAdditionalData' name='externalAdditionalData' value='" . $externalAdditionalData . "'/>";
+                "<input type='hidden' id='externalAdditionalData' name='externalAdditionalData' value='" . $externalAdditionalData . "'/>".
+                "<input type='hidden' id='serviceCode' name='serviceCode' value='" . $this->serviceCode . "'/>"
+                ;
             return $form;
         } catch (\Exception $e) {
             \Log::error('Aya pay push payment error :' . $e);
@@ -140,7 +146,9 @@ class AyaPayService
                 "<input type='hidden' id='amount' name='amount' value='" . $amount . "'/>" .
                 "<input type='hidden' id='currency' name='currency' value='" . $currency . "'/>" .
                 "<input type='hidden' id='externalTransactionId' name='externalTransactionId' value='" . $externalTransactionId . "'/>" .
-                "<input type='hidden' id='externalAdditionalData' name='externalAdditionalData' value='" . $externalAdditionalData . "'/>";
+                "<input type='hidden' id='externalAdditionalData' name='externalAdditionalData' value='" . $externalAdditionalData . "'/>".
+                "<input type='hidden' id='serviceCode' name='serviceCode' value='" . $this->serviceCode . "'/>"
+                ;
             return $form;
         } catch (\Exception $e) {
             \Log::error('Aya pay push payment error :' . $e);
@@ -161,6 +169,41 @@ class AyaPayService
             $http = new GuzzleHttpClient(
                 [
                     'base_uri' => $this->refundPaymentUrl,
+                    'headers' => [
+                        'Token' => $access_token,
+                        'Authorization' => $authorization_key,
+                        'Content-Type' => 'application/json'
+                    ]
+                ]
+            );
+
+            $data['referenceNumber'] = $referenceNumber;
+            $data['externalTransactionId'] = $externalTransactionId;
+
+            $res = $http->post('', [
+                'form_params' => $data
+            ]);
+
+            return json_decode($res->getBody(), true);
+        } catch (\Exception $e) {
+            \Log::error('Aya pay Refund Payment error :' . $e);
+            return false;
+        }
+    }
+
+    public function checkStatus($referenceNumber, $externalTransactionId)
+    {
+        try {
+            $loginKeys = $this->merchantLogin();
+            if (!$loginKeys) {
+                return false;
+            }
+            $access_token = $loginKeys['access_token'];
+            $authorization_key = $loginKeys['token']['token'];
+
+            $http = new GuzzleHttpClient(
+                [
+                    'base_uri' => $this->checkStatusUrl,
                     'headers' => [
                         'Token' => $access_token,
                         'Authorization' => $authorization_key,
