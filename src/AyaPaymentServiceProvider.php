@@ -2,7 +2,6 @@
 
 namespace AyaPayment;
 
-use AyaPayment\AyaPaymentService;
 use Illuminate\Support\ServiceProvider;
 
 class AyaPaymentServiceProvider extends ServiceProvider

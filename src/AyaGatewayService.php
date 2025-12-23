@@ -80,6 +80,8 @@ class AyaGatewayService
     public function htmlFormData($merchOrderId, $amount, $channel, $method, $userRef1 = "",$userRef2= "", $description = ""): array
     {
         $timestamp = Carbon::now()->timestamp;
+        $form['url'] = config('payment.aya_gateway.payment_url') . "/v1/payment/request";
+        $form["values"] = "";
         $formData = [
             'merchOrderId' => $merchOrderId,
             'amount' => ceil($amount),
@@ -97,7 +99,10 @@ class AyaGatewayService
             'overrideFrontendRedirectUrl' => config('ayapayment.gateway.frontend_url'),
         ];
         $formData['checkSum'] = $this->generateCheckSum(array_values($formData));
-        return $formData;
+        foreach ($formData as $key => $value) {
+            $form["values"] .= "<input type='hidden' name='" . $key . "' value='" . $value . "'>";
+        }
+        return $form;
     }
 
 

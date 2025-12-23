@@ -1,15 +1,11 @@
-# AYA Payment Laravel Package
+# AYA Payment Services Integration
 
-This package provides AYA Payment Gateway integration for Laravel.
+This project integrates multiple AYA payment services into a Laravel app:
 
-## Installation
-```bash
-php artisan vendor:publish --provider="AyaPayment\AyaPaymentServiceProvider" --tag="ayapayment-config"
-```
-## 📝 License
+- **AYA Gateway**
+- **AYAPay In-app**
 
-MIT License — See the LICENSE file for more information.
+## Services
 
-## 👨‍💻 Credits
-
-Made by Pyae Sone Phyo from Every-crystal.
+1. [AYA Gateway Docs](docs/AYAGateway.md)
+2. [AYAPay In-app Docs](docs/AYAPay.md)
