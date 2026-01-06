@@ -33,7 +33,11 @@ class AYAPayService
         $this->serviceCode = config('ayapayment.pay.service_code');
         $this->decryptionKey = config('ayapayment.pay.decryption_key');
 
-        $this->urlPrefix = $this->baseUrl . 'om/1.0.0/thirdparty/merchant/';
+        if (config('app.env') === 'production') {
+            $this->urlPrefix = $this->baseUrl . 'merchant/1.0.0/thirdparty/merchant/';
+        } else {
+            $this->urlPrefix = $this->baseUrl . 'om/1.0.0/thirdparty/merchant/';
+        }
         $this->merchantTokenUrl = $this->baseUrl . 'token';
         $this->merchantLoginUrl = $this->urlPrefix . 'login';
         $this->paymentRequestUrl = $this->urlPrefix . 'v2/requestPushPayment';
