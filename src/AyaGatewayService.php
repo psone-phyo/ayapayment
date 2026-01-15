@@ -31,19 +31,28 @@ class AyaGatewayService
         if (Cache::has($this->serviceCacheKey)) {
             return Cache::get($this->serviceCacheKey);
         }
+
         $timestamp = Carbon::now()->timestamp;
+
         try {
-            $response = $this->client->post($this->baseUrl . '/v1/payment/services', [
-                'body' => json_encode([
-                    'appKey' => config('ayapayment.gateway.app_key'),
-                    'timestamp' => $timestamp,
-                    'checkSum' => $this->generateCheckSum([
-                        config('ayapayment.gateway.app_key'),
-                        config('ayapayment.gateway.app_secret'),
-                        $timestamp
-                    ])
-                ])
-            ]);
+            $response = $this->client->post(
+                $this->baseUrl . '/v1/payment/services',
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept'       => 'application/json',
+                    ],
+                    'json' => [
+                        'appKey'    => config('ayapayment.gateway.app_key'),
+                        'timestamp' => $timestamp,
+                        'checkSum'  => $this->generateCheckSum([
+                            config('ayapayment.gateway.app_key'),
+                            config('ayapayment.gateway.app_secret'),
+                            $timestamp
+                        ])
+                    ]
+                ]
+            );
             if ($response->getStatusCode() == 200) {
                 $responseData = json_decode($response->getBody()->getContents(), true);
                 Cache::put($this->serviceCacheKey, $responseData['data'], Carbon::now()->addMinutes(5));
@@ -80,7 +89,7 @@ class AyaGatewayService
     public function htmlFormData($merchOrderId, $amount, $channel, $method, $userRef1 = "",$userRef2= "", $description = ""): array
     {
         $timestamp = Carbon::now()->timestamp;
-        $form['url'] = config('payment.aya_gateway.payment_url') . "/v1/payment/request";
+        $form['url'] = $this->baseUrl . "/v1/payment/request";
         $form["values"] = "";
         $formData = [
             'merchOrderId' => $merchOrderId,
